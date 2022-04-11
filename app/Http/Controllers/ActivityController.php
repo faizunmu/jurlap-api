@@ -48,7 +48,7 @@ class ActivityController extends Controller
             ]);
 
             if ($validate->fails()) {
-                throw response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
+                return response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
             }
 
             Activity::create($request->all());
@@ -84,7 +84,7 @@ class ActivityController extends Controller
             ]);
 
             if ($validate->fails()) {
-                throw response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
+                return response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
             }
 
             Activity::findOrFail($id)->update($request->all());
@@ -114,7 +114,7 @@ class ActivityController extends Controller
             $response = Activity::all()->where("date", ">=", Carbon::parse($request->from))->where("date", "<=", Carbon::parse($request->till))->sortBy("date");
 
             if ($response->count() === 0) {
-                throw response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
+                return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             return response()->json($response, Response::HTTP_OK);
