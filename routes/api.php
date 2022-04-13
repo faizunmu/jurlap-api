@@ -24,6 +24,11 @@ Route::post('activity', [ActivityController::class, 'store']);
 Route::post('activity/search', [ActivityController::class, 'search']);
 Route::post('activity/sort', [ActivityController::class, 'sort']);
 Route::post('files', [FilesController::class, 'store']);
+Route::post('/tokens/create', function (Request $request) {
+    $token = $request->user()->createToken($request->token_name);
+
+    return ['token' => $token->plainTextToken];
+});
 
 Route::delete("activity/{id}", [ActivityController::class, 'delete']);
 Route::delete("files", [FilesController::class, 'delete']);

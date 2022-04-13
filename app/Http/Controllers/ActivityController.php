@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\DocBlock\Tags\Throws;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -14,26 +17,25 @@ class ActivityController extends Controller
     public function index()
     {
         try {
-            $response = Activity::all();
+            $response = Activity::all()->sortBy("date");
 
             return response()->json($response, Response::HTTP_OK);
         } catch (Throwable $th) {
-            return response()->json(["message" => "Activity failed to fetch", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
     public function show($id)
     {
         try {
+
             $response = Activity::findOrFail($id)->first();
 
             return response()->json($response, Response::HTTP_OK);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (Throwable $th) {
-            $find = Activity::where(["id" => $id])->count();
-            if ($find == 0) {
-                return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
-            return response()->json(["message" => "Activity failed to fetch", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -48,28 +50,27 @@ class ActivityController extends Controller
             ]);
 
             if ($validate->fails()) {
-                return response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
+                throw new Exception("Invalid activity data");
             }
 
             Activity::create($request->all());
 
             return response()->json(["message" => "Activity added succesfully", "statusCode" => Response::HTTP_ACCEPTED], Response::HTTP_ACCEPTED);
         } catch (\Throwable $th) {
-            return response()->json(["message" => "Activity failed to store", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
     public function delete($id)
     {
         try {
-            Activity::findOrFail($id)->first()->delete();
+            $try = Activity::findOrFail($id)->first()->delete();
+
             return response()->json(["message" => "Activity deleted succesfully", "statusCode" => Response::HTTP_OK], Response::HTTP_OK);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $th) {
-            $find = Activity::where(["id" => $id])->count();
-            if ($find == 0) {
-                return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
-            return response()->json(["message" => "Activity failed to delete", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -84,14 +85,14 @@ class ActivityController extends Controller
             ]);
 
             if ($validate->fails()) {
-                return response()->json(["message" => "Invalid activity data", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $validate->errors()->first()], Response::HTTP_BAD_REQUEST);
+                throw new Exception("Invalid activity data");
             }
 
             Activity::findOrFail($id)->update($request->all());
 
             return response()->json(["message" => "Activity updated succesfully", "statusCode" => Response::HTTP_ACCEPTED], Response::HTTP_ACCEPTED);
         } catch (\Throwable $th) {
-            return response()->json(["message" => "Activity failed to update", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -102,9 +103,15 @@ class ActivityController extends Controller
 
             $response = Activity::query()->where('name', 'like', '%' . $keyword . '%')->get()->sortBy("date");
 
+            if ($response->count() == 0) {
+                throw new Exception("Activity not found");
+            }
+
             return response()->json($response, Response::HTTP_OK);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $th) {
-            return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND, "error" => $th->getMessage()], Response::HTTP_NOT_FOUND);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -113,13 +120,11 @@ class ActivityController extends Controller
         try {
             $response = Activity::all()->where("date", ">=", Carbon::parse($request->from))->where("date", "<=", Carbon::parse($request->till))->sortBy("date");
 
-            if ($response->count() === 0) {
-                return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
-
             return response()->json($response, Response::HTTP_OK);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $th) {
-            return response()->json(["message" => "Something not right", "statusCode" => Response::HTTP_BAD_REQUEST, "error" => $th->getMessage()], Response::HTTP_BAD_REQUEST);
+            return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
     }
 }
