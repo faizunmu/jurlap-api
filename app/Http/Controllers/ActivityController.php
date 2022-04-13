@@ -19,7 +19,7 @@ class ActivityController extends Controller
         try {
             $response = Activity::all()->sortBy("date");
 
-            return response()->json($response, Response::HTTP_OK);
+            return response()->json(["data" => $response], Response::HTTP_OK);
         } catch (Throwable $th) {
             return response()->json(["message" => $th->getMessage(), "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         }
@@ -31,7 +31,7 @@ class ActivityController extends Controller
 
             $response = Activity::findOrFail($id)->first();
 
-            return response()->json($response, Response::HTTP_OK);
+            return response()->json(["data" => $response], Response::HTTP_OK);
         } catch (ModelNotFoundException $e) {
             return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (Throwable $th) {
@@ -107,7 +107,7 @@ class ActivityController extends Controller
                 throw new Exception("Activity not found");
             }
 
-            return response()->json($response, Response::HTTP_OK);
+            return response()->json(["data" => $response], Response::HTTP_OK);
         } catch (ModelNotFoundException $e) {
             return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $th) {
@@ -120,7 +120,7 @@ class ActivityController extends Controller
         try {
             $response = Activity::all()->where("date", ">=", Carbon::parse($request->from))->where("date", "<=", Carbon::parse($request->till))->sortBy("date");
 
-            return response()->json($response, Response::HTTP_OK);
+            return response()->json(["data" => $response], Response::HTTP_OK);
         } catch (ModelNotFoundException $e) {
             return response()->json(["message" => "Activity not found", "statusCode" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $th) {
